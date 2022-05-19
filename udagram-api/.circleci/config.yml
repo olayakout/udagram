@@ -1,0 +1,59 @@
+version: 2.1
+orbs:
+  aws-cli: circleci/aws-cli@2.0.3
+  aws-s3: circleci/aws-s3@3.0.0
+  aws-elastic-beanstalk: circleci/aws-elastic-beanstalk@2.0.1
+  node: circleci/node@5.0.2
+jobs:
+  build:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - node/install
+      - checkout
+      - aws-cli/setup
+      - aws-elastic-beanstalk/setup
+      - aws-cli/setup:
+          aws-access-key-id: AKIA2HZU75THBINVZND6 
+          aws-secret-access-key: 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 
+          aws-region: us-east-1
+      - run:
+          name: install angular cli globally
+          command: |
+           npm install -g @angular/cli
+      - run:
+          name: Front-End Install
+          command: |
+            cd ./udagram/udagram-frontend && npm install && npm run build 
+      - run:
+          name: Back-End Install
+          command: |
+            cd ./udagram/udagram-api && npm install && npm run build           
+      - run:
+          name: Front-End build
+          command: |
+            cd ./udagram/udagram-frontend && npm run build 
+      - run:
+          name: Back-End build
+          command: |
+            cd ./udagram/udagram-api && npm run build 
+      - run:
+          name: Front-End test-lint
+          command: |
+            cd ./udagram/udagram-frontend && npm run lint
+      - run:
+          name: Front-End deploy
+          command: |
+            cd ./udagram/udagram-frontend && npm run deploy      
+      - run:
+          name: EB intitialization
+          command: |
+            eb init udagramolaapp --platform Node.js --region us-east-1
+            eb use Udagramolaapp-env-1
+            eb status   
+      - run:
+          name: Back-End deploy
+          command: |
+            eb init Udagramolaapp --platform Node.js --region us-east-1
+            eb use Udagramolaapp-env-1
+            cd ./udagram/udagram-api && npm run deploy 
